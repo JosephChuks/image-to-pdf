@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image to PDF</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js"
+      integrity="sha384-2OatzQy1H+Zd/IIrjr1TcuDGqLXeHhbooAyJY1KdQMKnr4LZ22k31GBLdYKHmVjg"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      .htmx-indicator { display: none; }
+      .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline-flex; }
+      .htmx-request .idle-label { display: none; }
+    </style>
+  </head>
+  <body class="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-indigo-50 text-slate-800" hx-boost="true">
+    <nav class="border-b border-slate-200 bg-white/70 backdrop-blur">
+      <div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+        <a href="/" class="flex items-center gap-2 font-semibold text-slate-900">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.63a3.38 3.38 0 0 0-3.38-3.37h-1.5A1.13 1.13 0 0 1 13.5 7.13v-1.5a3.38 3.38 0 0 0-3.38-3.38H8.25M10.5 2.25H5.63c-.62 0-1.13.5-1.13 1.13v17.25c0 .62.5 1.12 1.13 1.12h12.75c.62 0 1.12-.5 1.12-1.12V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+          </span>
+          Image to PDF
+        </a>
+        <a
+          href="https://github.com/josephchuks/image-to-pdf"
+          target="_blank"
+          hx-boost="false"
+          class="text-sm text-slate-600 transition hover:text-indigo-600"
+          >Source code</a
+        >
+      </div>
+    </nav>
+
+    <main class="flex flex-grow items-center justify-center px-4 py-10">
+      <div class="w-full max-w-xl">
+        <div class="mb-6 text-center">
+          <h1 class="text-3xl font-bold tracking-tight text-slate-900">Turn images into a PDF</h1>
+          <p class="mt-2 text-slate-600">Each image becomes one page, in the order you pick them.</p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <form
+            id="upload-form"
+            hx-post="/convert"
+            hx-target="#api-response"
+            hx-encoding="multipart/form-data"
+            class="flex flex-col gap-4"
+          >
+            <label
+              id="drop-zone"
+              for="file-input"
+              class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 px-4 py-10 text-center transition hover:border-indigo-400 hover:bg-indigo-50/50"
+            >
+              <svg class="h-10 w-10 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.16-5.16a2.25 2.25 0 0 1 3.18 0l5.16 5.16m-1.5-1.5 1.41-1.41a2.25 2.25 0 0 1 3.18 0l2.91 2.91m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.01v.01h-.01V8.25Zm.38 0a.38.38 0 1 1-.75 0 .38.38 0 0 1 .75 0Z" />
+              </svg>
+              <span class="font-medium text-slate-700">
+                <span class="text-indigo-600">Click to choose</span> or drag images here
+              </span>
+              <span class="text-sm text-slate-500">PNG, JPG, GIF and more</span>
+              <input id="file-input" type="file" name="images" multiple accept="image/*" class="sr-only" />
+            </label>
+
+            <div id="preview" class="hidden">
+              <div class="mb-2 flex items-center justify-between text-sm">
+                <span id="file-count" class="text-slate-600"></span>
+                <button type="button" id="clear-btn" class="text-slate-500 hover:text-red-600">Clear</button>
+              </div>
+              <ul id="thumbs" class="grid grid-cols-4 gap-2 sm:grid-cols-5"></ul>
+            </div>
+
+            <button
+              id="convert-btn"
+              type="submit"
+              disabled
+              hx-disabled-elt="this"
+              class="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              <span class="htmx-indicator items-center gap-2">
+                <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-e-transparent"></span>
+                Converting…
+              </span>
+              <span class="idle-label">Convert to PDF</span>
+            </button>
+          </form>
+
+          <div id="api-response" class="mt-4 empty:hidden" aria-live="polite"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="border-t border-slate-200 bg-white/70 py-4 text-center text-sm text-slate-500">
+      &copy; <span id="current-year"></span>
+      <a href="/" class="text-indigo-600">Image to PDF</a> · All rights reserved.
+    </footer>
+
+    <script>
+      document.getElementById("current-year").textContent = new Date().getFullYear();
+
+      const input = document.getElementById("file-input");
+      const dropZone = document.getElementById("drop-zone");
+      const preview = document.getElementById("preview");
+      const thumbs = document.getElementById("thumbs");
+      const fileCount = document.getElementById("file-count");
+      const convertBtn = document.getElementById("convert-btn");
+
+      function renderPreview() {
+        thumbs.querySelectorAll("img").forEach((img) => URL.revokeObjectURL(img.src));
+        thumbs.innerHTML = "";
+        const files = [...input.files];
+        preview.classList.toggle("hidden", files.length === 0);
+        convertBtn.disabled = files.length === 0;
+        fileCount.textContent = `${files.length} image${files.length === 1 ? "" : "s"} selected`;
+        files.forEach((file, i) => {
+          const li = document.createElement("li");
+          li.className = "relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100";
+          li.title = file.name;
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(file);
+          img.className = "h-full w-full object-cover";
+          const badge = document.createElement("span");
+          badge.className = "absolute left-1 top-1 rounded bg-black/60 px-1.5 text-xs text-white";
+          badge.textContent = i + 1;
+          li.append(img, badge);
+          thumbs.append(li);
+        });
+      }
+
+      function resetUploader() {
+        input.value = "";
+        renderPreview();
+      }
+
+      input.addEventListener("change", () => {
+        document.getElementById("api-response").innerHTML = "";
+        renderPreview();
+      });
+      document.getElementById("clear-btn").addEventListener("click", resetUploader);
+
+      ["dragenter", "dragover"].forEach((type) =>
+        dropZone.addEventListener(type, (e) => {
+          e.preventDefault();
+          dropZone.classList.add("border-indigo-500", "bg-indigo-50");
+        })
+      );
+      ["dragleave", "drop"].forEach((type) =>
+        dropZone.addEventListener(type, () => dropZone.classList.remove("border-indigo-500", "bg-indigo-50"))
+      );
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const dt = new DataTransfer();
+        [...e.dataTransfer.files].filter((f) => f.type.startsWith("image/")).forEach((f) => dt.items.add(f));
+        input.files = dt.files;
+        input.dispatchEvent(new Event("change"));
+      });
+    </script>
+  </body>
+</html>
